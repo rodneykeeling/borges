@@ -1,11 +1,17 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use crate::graphql::Book;
 use axum::async_trait;
 
+pub type Storage = Arc<Mutex<InMemoryBookRepository>>;
+
 #[async_trait]
 pub trait BookRepository {
-    fn get_by_title(&self, title: String) -> Option<&Book>;
+    fn get_by_title(&self, title: String) -> Option<Book>;
+    fn add(&mut self, book: Book) -> Book;
 }
 
 // In-memory datastore used for tests/testing. Uses a HashMap instead of Vec for O(1) gets and inserts
@@ -31,8 +37,19 @@ impl InMemoryBookRepository {
     }
 }
 
+impl Default for InMemoryBookRepository {
+    fn default() -> Self {
+        InMemoryBookRepository::new()
+    }
+}
+
 impl BookRepository for InMemoryBookRepository {
-    fn get_by_title(&self, title: String) -> Option<&Book> {
-        self.db.get(&title)
+    fn get_by_title(&self, title: String) -> Option<Book> {
+        self.db.get(&title).cloned()
+    }
+
+    fn add(&mut self, book: Book) -> Book {
+        self.db.insert(book.title.clone(), book.clone());
+        book
     }
 }

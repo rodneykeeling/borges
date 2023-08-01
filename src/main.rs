@@ -1,10 +1,10 @@
 use std::net::SocketAddr;
 
 use crate::{
-    graphql::{graphiql, graphql_handler, Query},
-    repository::InMemoryBookRepository,
+    graphql::{graphiql, graphql_handler, Mutation, Query},
+    repository::Storage,
 };
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{EmptySubscription, Schema};
 use axum::{extract::Extension, routing::get, Router, Server};
 
 mod graphql;
@@ -12,8 +12,8 @@ mod repository;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let repository = InMemoryBookRepository::new();
-    let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
+    let repository = Storage::default();
+    let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(repository)
         .finish();
     let app = Router::new()
