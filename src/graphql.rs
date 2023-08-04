@@ -1,23 +1,23 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use anyhow::Result;
 use async_graphql::{
     http::GraphiQLSource, Context, EmptySubscription, InputObject, Object, Schema, SimpleObject,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::{
-    extract::Extension,
-    response::{Html, IntoResponse},
-};
+use axum::{extract::Extension, response::Html};
+use tokio::sync::Mutex;
 
-use crate::repository::{BookRepository, InMemoryBookRepository};
+use crate::repository::{BookRepository, PostgresBookRepository};
 
 #[derive(Clone, Debug, SimpleObject)]
 pub struct Book {
+    pub id: Option<i32>,
     pub title: String,
     pub author: String,
     pub image_url: Option<String>,
-    pub year: u32,
-    pub pages: u32,
+    pub year: i32,
+    pub pages: i32,
 }
 
 #[derive(Clone, InputObject)]
@@ -25,8 +25,8 @@ pub struct BookInput {
     pub title: String,
     pub author: String,
     pub image_url: Option<String>,
-    pub year: u32,
-    pub pages: u32,
+    pub year: i32,
+    pub pages: i32,
 }
 
 pub struct Query;
@@ -34,30 +34,30 @@ pub struct Mutation;
 
 #[Object]
 impl Query {
-    async fn book(&self, ctx: &Context<'_>, title: String) -> Option<Book> {
+    async fn book(&self, ctx: &Context<'_>, title: String) -> Result<Option<Book>> {
         let repository = ctx
-            .data_unchecked::<Arc<Mutex<InMemoryBookRepository>>>()
+            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
-        let book = repository.lock().unwrap().get_by_title(title);
-        book
+        let book = repository.lock().await.get_by_title(title).await?;
+        Ok(book)
     }
 }
 
 #[Object]
 impl Mutation {
-    async fn add_book(&self, ctx: &Context<'_>, input: BookInput) -> Book {
+    async fn add_book(&self, ctx: &Context<'_>, input: BookInput) -> Result<Book> {
         let repository = ctx
-            .data_unchecked::<Arc<Mutex<InMemoryBookRepository>>>()
+            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
-        let book = Book {
+        let book = BookInput {
             title: input.title,
             author: input.author,
             image_url: input.image_url,
             year: input.year,
             pages: input.pages,
         };
-        let result = repository.lock().unwrap().add(book);
-        result
+        let result = repository.lock().await.add(book).await?;
+        Ok(result)
     }
 }
 
@@ -68,6 +68,6 @@ pub async fn graphql_handler(
     schema.execute(req.into_inner()).await.into()
 }
 
-pub async fn graphiql() -> impl IntoResponse {
+pub async fn graphiql() -> Html<String> {
     Html(GraphiQLSource::build().finish())
 }
