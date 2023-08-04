@@ -82,11 +82,11 @@ impl BookRepository for PostgresBookRepository {
 }
 
 // In-memory datastore used for tests/testing. Uses a HashMap instead of Vec for O(1) gets and inserts
-pub struct InMemoryBookRepository {
+pub struct MockBookRepository {
     pub db: HashMap<String, Book>,
 }
 
-impl InMemoryBookRepository {
+impl MockBookRepository {
     pub fn new() -> Self {
         let mut db = HashMap::new();
         let title = "Collected Fictions".to_string();
@@ -106,7 +106,7 @@ impl InMemoryBookRepository {
 }
 
 #[async_trait]
-impl BookRepository for InMemoryBookRepository {
+impl BookRepository for MockBookRepository {
     async fn get_by_title(&self, title: String) -> Result<Option<Book>> {
         Ok(self.db.get(&title).cloned())
     }
