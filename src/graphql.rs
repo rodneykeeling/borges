@@ -12,7 +12,7 @@ use crate::repository::{BookRepository, PostgresBookRepository};
 
 #[derive(Clone, Debug, SimpleObject)]
 pub struct Book {
-    pub id: Option<i32>,
+    pub id: i32,
     pub title: String,
     pub author: String,
     pub image_url: Option<String>,
@@ -49,15 +49,15 @@ impl Mutation {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
-        let book = BookInput {
+        let book_input = BookInput {
             title: input.title,
             author: input.author,
             image_url: input.image_url,
             year: input.year,
             pages: input.pages,
         };
-        let result = repository.lock().await.add(book).await?;
-        Ok(result)
+        let book = repository.lock().await.add(book_input).await?;
+        Ok(book)
     }
 }
 

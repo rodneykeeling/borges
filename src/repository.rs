@@ -7,7 +7,7 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tokio::sync::Mutex;
 
 struct SqlBook {
-    id: Option<i32>,
+    id: i32,
     title: String,
     author: String,
     image_url: Option<String>,
@@ -15,10 +15,23 @@ struct SqlBook {
     pages: i32,
 }
 
+impl SqlBook {
+    fn into_book(self) -> Book {
+        Book {
+            id: self.id,
+            title: self.title,
+            author: self.author,
+            image_url: self.image_url,
+            year: self.year,
+            pages: self.pages,
+        }
+    }
+}
+
 #[async_trait]
 pub trait BookRepository {
     async fn get_by_title(&self, title: String) -> Result<Option<Book>>;
-    async fn add(&mut self, book: BookInput) -> Result<Book>;
+    async fn add(&mut self, input: BookInput) -> Result<Book>;
 }
 
 pub struct PostgresBookRepository {
@@ -48,37 +61,23 @@ impl BookRepository for PostgresBookRepository {
         .unwrap_or(None)
         .unwrap();
 
-        return Ok(Some(Book {
-            id: row.id,
-            title: row.title,
-            author: row.author,
-            image_url: row.image_url,
-            year: row.year,
-            pages: row.pages,
-        }));
+        return Ok(Some(row.into_book()));
     }
 
-    async fn add(&mut self, book: BookInput) -> Result<Book> {
+    async fn add(&mut self, input: BookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,
             "INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages",
-            book.title,
-            book.author,
-            book.image_url,
-            book.year,
-            book.pages,
+            input.title,
+            input.author,
+            input.image_url,
+            input.year,
+            input.pages,
         )
         .fetch_one(&self.db)
         .await?;
 
-        return Ok(Book {
-            id: row.id,
-            title: row.title,
-            author: row.author,
-            image_url: row.image_url,
-            year: row.year,
-            pages: row.pages,
-        });
+        return Ok(row.into_book());
     }
 }
 
@@ -94,7 +93,7 @@ impl InMemoryBookRepository {
         db.insert(
             title.clone(),
             Book {
-                id: None,
+                id: 0,
                 title,
                 author: "Jorge Luis Borges".to_string(),
                 image_url: None,
@@ -112,16 +111,16 @@ impl BookRepository for InMemoryBookRepository {
         Ok(self.db.get(&title).cloned())
     }
 
-    async fn add(&mut self, book: BookInput) -> Result<Book> {
-        let new_book = Book {
-            id: None,
-            title: book.title,
-            author: book.author,
-            image_url: book.image_url,
-            year: book.year,
-            pages: book.pages,
+    async fn add(&mut self, input: BookInput) -> Result<Book> {
+        let book = Book {
+            id: 0,
+            title: input.title,
+            author: input.author,
+            image_url: input.image_url,
+            year: input.year,
+            pages: input.pages,
         };
-        self.db.insert(new_book.title.clone(), new_book.clone());
-        Ok(new_book)
+        self.db.insert(book.title.clone(), book.clone());
+        Ok(book)
     }
 }
