@@ -5,7 +5,7 @@ use crate::{
     repository::PostgresBookRepository,
 };
 use anyhow::Result;
-use async_graphql::{EmptySubscription, Schema};
+use async_graphql::{extensions::Logger, EmptySubscription, Schema};
 use axum::{extract::Extension, routing::get, Router, Server};
 use dotenvy::dotenv;
 use tokio::signal;
@@ -28,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(repository)
+        .extension(Logger)
         .finish();
 
     let app = Router::new()
