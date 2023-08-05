@@ -10,7 +10,7 @@ use axum::{extract::Extension, routing::get, Router, Server};
 use dotenvy::dotenv;
 use tokio::signal;
 use tower_http::trace::{self, TraceLayer};
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 
 mod graphql;
 mod repository;
@@ -72,5 +72,5 @@ async fn shutdown_signal() {
         _ = terminate => {},
     }
 
-    println!("signal received, starting graceful shutdown");
+    warn!("Kill signal received. Starting graceful shutdown.");
 }

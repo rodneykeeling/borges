@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use anyhow::Result;
 use async_graphql::{
-    http::GraphiQLSource, Context, EmptySubscription, InputObject, Object, Schema, SimpleObject,
+    http::GraphiQLSource, ComplexObject, Context, EmptySubscription, InputObject, Object, Schema,
+    SimpleObject,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{extract::Extension, response::Html};
@@ -11,6 +12,7 @@ use tokio::sync::Mutex;
 use crate::repository::{BookRepository, PostgresBookRepository};
 
 #[derive(Clone, Debug, SimpleObject)]
+#[graphql(complex)]
 pub struct Book {
     pub id: i32,
     pub title: String,
@@ -29,17 +31,58 @@ pub struct BookInput {
     pub pages: i32,
 }
 
+#[derive(SimpleObject)]
+pub struct Note {
+    pub id: i32,
+    pub note: String,
+    pub book_id: i32,
+}
+
+#[derive(InputObject)]
+pub struct NoteInput {
+    pub book_id: i32,
+    pub note: String,
+}
+
 pub struct Query;
 pub struct Mutation;
 
+#[derive(Debug)]
+pub enum GraphQLError {
+    BadInput(String),
+}
+
+impl Display for GraphQLError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::BadInput(bad_input_error) => write!(f, "{bad_input_error}"),
+        }
+    }
+}
+
+impl std::error::Error for GraphQLError {}
+
 #[Object]
 impl Query {
-    async fn book(&self, ctx: &Context<'_>, title: String) -> Result<Option<Book>> {
+    async fn book(
+        &self,
+        ctx: &Context<'_>,
+        book_id: Option<i32>,
+        title: Option<String>,
+    ) -> Result<Option<Book>> {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
-        let book = repository.lock().await.get_by_title(title).await?;
-        Ok(book)
+
+        if let Some(input) = book_id {
+            return Ok(repository.lock().await.get_book_by_id(input).await?);
+        } else if let Some(input) = title {
+            return Ok(repository.lock().await.get_book_by_title(input).await?);
+        }
+        Err(GraphQLError::BadInput(
+            "Either `bookId` or `title` input value required for query.".to_string(),
+        )
+        .into())
     }
 }
 
@@ -56,8 +99,31 @@ impl Mutation {
             year: input.year,
             pages: input.pages,
         };
-        let book = repository.lock().await.add(book_input).await?;
+        let book = repository.lock().await.add_book(book_input).await?;
         Ok(book)
+    }
+
+    async fn add_note(&self, ctx: &Context<'_>, input: NoteInput) -> Result<Note> {
+        let repository = ctx
+            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
+            .clone();
+        let note_input = NoteInput {
+            book_id: input.book_id,
+            note: input.note,
+        };
+        let note = repository.lock().await.add_note(note_input).await?;
+        Ok(note)
+    }
+}
+
+#[ComplexObject]
+impl Book {
+    async fn notes(&self, ctx: &Context<'_>) -> Result<Option<Vec<Note>>> {
+        let repository = ctx
+            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
+            .clone();
+        let notes = repository.lock().await.get_notes_by_book(self.id).await?;
+        Ok(notes)
     }
 }
 
