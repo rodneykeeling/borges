@@ -114,6 +114,14 @@ impl Mutation {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
+
+        if input.pages < 1 {
+            return Err(GraphQLError::BadInput(
+                "Book page number cannot be less than 1.".to_string(),
+            )
+            .into());
+        }
+
         let book_input = BookInput {
             title: input.title,
             author: input.author,
@@ -130,6 +138,37 @@ impl Mutation {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
             .clone();
+
+        // Fetch requested book for validation
+        let book = repository
+            .lock()
+            .await
+            .get_book_by_id(input.book_id)
+            .await?;
+
+        if book.is_none() {
+            return Err(GraphQLError::BadInput(
+                "Book with ID {input.book_id} not found".to_string(),
+            )
+            .into());
+        };
+        let book = book.unwrap();
+
+        if let Some(note_page) = input.page {
+            if note_page > book.pages {
+                return Err(GraphQLError::BadInput(
+                    "Note page number cannot be greater than the highest page count of the book."
+                        .to_string(),
+                )
+                .into());
+            } else if note_page < 1 {
+                return Err(GraphQLError::BadInput(
+                    "Note page number cannot be less than 1.".to_string(),
+                )
+                .into());
+            }
+        }
+
         let note_input = NoteInput {
             book_id: input.book_id,
             note: input.note,
