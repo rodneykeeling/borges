@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use anyhow::Result;
 use async_graphql::{
@@ -7,9 +7,8 @@ use async_graphql::{
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{extract::Extension, response::Html};
-use tokio::sync::Mutex;
 
-use crate::repository::{BookRepository, PostgresBookRepository};
+use crate::repository::{BookRepository, Storage};
 
 #[derive(Clone, Debug, SimpleObject)]
 #[graphql(complex)]
@@ -91,9 +90,7 @@ impl Query {
         book_id: Option<i32>,
         title: Option<String>,
     ) -> Result<Option<Book>> {
-        let repository = ctx
-            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
-            .clone();
+        let repository = ctx.data_unchecked::<Storage>().clone();
 
         if let Some(input) = book_id {
             return Ok(repository.lock().await.get_book_by_id(input).await?);
@@ -111,9 +108,7 @@ impl Query {
 impl Mutation {
     /// Add a new book to the shelf
     async fn add_book(&self, ctx: &Context<'_>, input: BookInput) -> Result<Book> {
-        let repository = ctx
-            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
-            .clone();
+        let repository = ctx.data_unchecked::<Storage>().clone();
 
         if input.pages < 1 {
             return Err(GraphQLError::BadInput(
@@ -135,9 +130,7 @@ impl Mutation {
 
     /// Add a new note for a given book
     async fn add_note(&self, ctx: &Context<'_>, input: NoteInput) -> Result<Note> {
-        let repository = ctx
-            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
-            .clone();
+        let repository = ctx.data_unchecked::<Storage>().clone();
 
         // Fetch requested book for validation
         let book = repository
@@ -183,9 +176,7 @@ impl Mutation {
 impl Book {
     /// All notes related to the given book
     async fn notes(&self, ctx: &Context<'_>) -> Result<Option<Vec<Note>>> {
-        let repository = ctx
-            .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
-            .clone();
+        let repository = ctx.data_unchecked::<Storage>().clone();
         let notes = repository.lock().await.get_notes_by_book(self.id).await?;
         Ok(notes)
     }

@@ -7,6 +7,8 @@ use dotenvy_macro::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tokio::sync::Mutex;
 
+pub type Storage = Arc<Mutex<PostgresBookRepository>>;
+
 /// SQL model representing the `book` table.
 struct SqlBook {
     id: i32,
