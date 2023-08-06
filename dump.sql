@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS note(
     id SERIAL PRIMARY KEY NOT NULL,
     book_id INTEGER NOT NULL,
     note TEXT NOT NULL,
+    page INTEGER,
     CONSTRAINT fk_book_id
     FOREIGN KEY (book_id)
     REFERENCES book(id)
@@ -28,6 +29,6 @@ INSERT INTO book (title, author, image_url, year, pages) VALUES ('Gravity''s Rai
 INSERT INTO book (title, author, image_url, year, pages) VALUES ('White Teeth', 'Zadie Smith', null, 2001, 464);
 INSERT INTO book (title, author, image_url, year, pages) VALUES ('Blood Meridian', 'Cormac McCarthy', null, 1985, 351);
 
-INSERT INTO note (book_id, note) VALUES (1, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
-INSERT INTO note (book_id, note) VALUES (2, 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.');
-INSERT INTO note (book_id, note) VALUES (2, 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.');
+INSERT INTO note (book_id, note, page) VALUES (1, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', 100);
+INSERT INTO note (book_id, note, page) VALUES (2, 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', 10);
+INSERT INTO note (book_id, note, page) VALUES (2, 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.', 420);

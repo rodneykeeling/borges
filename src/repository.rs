@@ -34,8 +34,9 @@ impl SqlBook {
 /// SQL model representing the `note` table.
 struct SqlNote {
     id: i32,
-    note: String,
     book_id: i32,
+    note: String,
+    page: Option<i32>,
 }
 
 impl SqlNote {
@@ -43,8 +44,9 @@ impl SqlNote {
     fn into_note(self) -> Note {
         Note {
             id: self.id,
-            note: self.note,
             book_id: self.book_id,
+            note: self.note,
+            page: self.page,
         }
     }
 }
@@ -127,7 +129,7 @@ impl BookRepository for PostgresBookRepository {
     async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>> {
         let rows = sqlx::query_as!(
             SqlNote,
-            "SELECT id, note, book_id FROM note WHERE book_id=$1",
+            "SELECT id, book_id, note, page FROM note WHERE book_id=$1",
             book_id,
         )
         .fetch_all(&self.db)
@@ -140,9 +142,10 @@ impl BookRepository for PostgresBookRepository {
     async fn add_note(&mut self, input: NoteInput) -> Result<Note> {
         let row = sqlx::query_as!(
             SqlNote,
-            "INSERT INTO note(book_id, note) VALUES ($1, $2) RETURNING id, book_id, note",
+            "INSERT INTO note(book_id, note, page) VALUES ($1, $2, $3) RETURNING id, book_id, note, page",
             input.book_id,
             input.note,
+            input.page,
         )
         .fetch_one(&self.db)
         .await?;

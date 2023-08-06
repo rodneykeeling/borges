@@ -14,34 +14,54 @@ use crate::repository::{BookRepository, PostgresBookRepository};
 #[derive(Clone, Debug, SimpleObject)]
 #[graphql(complex)]
 pub struct Book {
+    /// The book ID
     pub id: i32,
+    /// The title of the book
     pub title: String,
+    /// The author of the book
     pub author: String,
+    /// A link to an image of the book cover
     pub image_url: Option<String>,
+    /// The year the book was published
     pub year: i32,
+    /// The number of pages in the book
     pub pages: i32,
 }
 
 #[derive(Clone, InputObject)]
 pub struct BookInput {
+    /// The title of the book
     pub title: String,
+    /// The author of the book
     pub author: String,
+    /// A link to an image of the book cover
     pub image_url: Option<String>,
+    /// The year the book was published
     pub year: i32,
+    /// The number of pages in the book
     pub pages: i32,
 }
 
 #[derive(SimpleObject)]
 pub struct Note {
+    /// The note ID
     pub id: i32,
-    pub note: String,
+    /// The ID of the book this note references
     pub book_id: i32,
+    /// The note content for a book
+    pub note: String,
+    /// An optional page number related to the number
+    pub page: Option<i32>,
 }
 
 #[derive(InputObject)]
 pub struct NoteInput {
+    /// The ID of the book this note references
     pub book_id: i32,
+    /// The note content for a book
     pub note: String,
+    /// An optional page number related to the number
+    pub page: Option<i32>,
 }
 
 pub struct Query;
@@ -64,6 +84,7 @@ impl std::error::Error for GraphQLError {}
 
 #[Object]
 impl Query {
+    /// Fetch a book by either its ID or by its title
     async fn book(
         &self,
         ctx: &Context<'_>,
@@ -88,6 +109,7 @@ impl Query {
 
 #[Object]
 impl Mutation {
+    /// Add a new book to the shelf
     async fn add_book(&self, ctx: &Context<'_>, input: BookInput) -> Result<Book> {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
@@ -103,6 +125,7 @@ impl Mutation {
         Ok(book)
     }
 
+    /// Add a new note for a given book
     async fn add_note(&self, ctx: &Context<'_>, input: NoteInput) -> Result<Note> {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
@@ -110,6 +133,7 @@ impl Mutation {
         let note_input = NoteInput {
             book_id: input.book_id,
             note: input.note,
+            page: input.page,
         };
         let note = repository.lock().await.add_note(note_input).await?;
         Ok(note)
@@ -118,6 +142,7 @@ impl Mutation {
 
 #[ComplexObject]
 impl Book {
+    /// All notes related to the given book
     async fn notes(&self, ctx: &Context<'_>) -> Result<Option<Vec<Note>>> {
         let repository = ctx
             .data_unchecked::<Arc<Mutex<PostgresBookRepository>>>()
