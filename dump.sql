@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS note(
 );
 
 INSERT INTO book (title, author, image_url, year, pages) VALUES ('Collected Fictions', 'Jorge Luis Borges', null, 1998, 565);
-INSERT INTO book (title, author, image_url, year, pages) VALUES ('Gravity''s Rainbow', 'Thomas Pynchon', null, 1973, 775);
+INSERT INTO book (title, author, image_url, year, pages) VALUES ('Gravity''s Rainbow', 'Thomas Pynchon', null, 1973, 776);
 INSERT INTO book (title, author, image_url, year, pages) VALUES ('White Teeth', 'Zadie Smith', null, 2001, 464);
 INSERT INTO book (title, author, image_url, year, pages) VALUES ('Blood Meridian', 'Cormac McCarthy', null, 1985, 351);
 

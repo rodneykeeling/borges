@@ -6,6 +6,7 @@ use anyhow::Result;
 use async_graphql::{extensions::Logger, EmptySubscription, Schema};
 use axum::{extract::Extension, routing::get, Router};
 use dotenvy::dotenv;
+use repository::BookRepository;
 use tokio::signal;
 use tower_http::trace::{self, TraceLayer};
 use tracing::warn;

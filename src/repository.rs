@@ -4,7 +4,7 @@ use crate::graphql::{Book, BookInput, Note, NoteInput};
 use anyhow::Result;
 use axum::async_trait;
 use dotenvy_macro::dotenv;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{pool::PoolOptions, Database, Pool, Postgres};
 use tokio::sync::Mutex;
 
 pub type Storage = Arc<Mutex<PostgresBookRepository>>;
@@ -57,6 +57,9 @@ impl SqlNote {
 /// any datastore.
 #[async_trait]
 pub trait BookRepository {
+    type Db: Database;
+
+    async fn new() -> Result<Arc<Mutex<Self>>>;
     async fn get_book_by_title(&self, title: String) -> Result<Option<Book>>;
     async fn get_book_by_id(&self, book_id: i32) -> Result<Option<Book>>;
     async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>>;
@@ -68,18 +71,18 @@ pub struct PostgresBookRepository {
     pub db: Pool<Postgres>,
 }
 
-impl PostgresBookRepository {
-    pub async fn new() -> Result<Arc<Mutex<Self>>> {
-        let db = PgPoolOptions::new()
+#[async_trait]
+impl BookRepository for PostgresBookRepository {
+    type Db = Postgres;
+
+    async fn new() -> Result<Arc<Mutex<Self>>> {
+        let db: Pool<Self::Db> = PoolOptions::new()
             .max_connections(5)
             .connect(dotenv!("DATABASE_URL"))
             .await?;
         Ok(Arc::new(Mutex::new(Self { db })))
     }
-}
 
-#[async_trait]
-impl BookRepository for PostgresBookRepository {
     async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {
         let row = sqlx::query_as!(
             SqlBook,
