@@ -1,12 +1,11 @@
 use crate::{
     graphql::{graphiql, graphql_handler, Mutation, Query},
-    repository::PostgresBookRepository,
+    repository::BookRepository,
 };
 use anyhow::Result;
 use async_graphql::{extensions::Logger, EmptySubscription, Schema};
 use axum::{extract::Extension, routing::get, Router};
 use dotenvy::dotenv;
-use repository::BookRepository;
 use tokio::signal;
 use tower_http::trace::{self, TraceLayer};
 use tracing::warn;
@@ -23,7 +22,7 @@ pub async fn generate_app() -> Result<Router, Box<dyn std::error::Error>> {
         .compact()
         .init();
 
-    let repository = PostgresBookRepository::new().await?;
+    let repository = BookRepository::new().await?;
 
     let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(repository)

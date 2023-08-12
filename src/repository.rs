@@ -2,12 +2,11 @@ use std::sync::Arc;
 
 use crate::graphql::{Book, BookInput, Note, NoteInput};
 use anyhow::Result;
-use axum::async_trait;
 use dotenvy_macro::dotenv;
-use sqlx::{pool::PoolOptions, Database, Pool, Postgres};
+use sqlx::{pool::PoolOptions, Pool, Postgres};
 use tokio::sync::Mutex;
 
-pub type Storage = Arc<Mutex<PostgresBookRepository>>;
+pub type Storage = Arc<Mutex<BookRepository>>;
 
 /// SQL model representing the `book` table.
 struct SqlBook {
@@ -53,37 +52,20 @@ impl SqlNote {
     }
 }
 
-/// A trait defining all functionality required for the Book domain type. Can be implemented for
-/// any datastore.
-#[async_trait]
-pub trait BookRepository {
-    type Db: Database;
-
-    async fn new() -> Result<Arc<Mutex<Self>>>;
-    async fn get_book_by_title(&self, title: String) -> Result<Option<Book>>;
-    async fn get_book_by_id(&self, book_id: i32) -> Result<Option<Book>>;
-    async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>>;
-    async fn add_book(&mut self, input: BookInput) -> Result<Book>;
-    async fn add_note(&mut self, input: NoteInput) -> Result<Note>;
-}
-
-pub struct PostgresBookRepository {
+pub struct BookRepository {
     pub db: Pool<Postgres>,
 }
 
-#[async_trait]
-impl BookRepository for PostgresBookRepository {
-    type Db = Postgres;
-
-    async fn new() -> Result<Arc<Mutex<Self>>> {
-        let db: Pool<Self::Db> = PoolOptions::new()
+impl BookRepository {
+    pub async fn new() -> Result<Arc<Mutex<Self>>> {
+        let db: Pool<Postgres> = PoolOptions::new()
             .max_connections(5)
             .connect(dotenv!("DATABASE_URL"))
             .await?;
         Ok(Arc::new(Mutex::new(Self { db })))
     }
 
-    async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {
+    pub async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {
         let row = sqlx::query_as!(
             SqlBook,
             "SELECT id, title, author, image_url, year, pages FROM book WHERE title=$1",
@@ -99,7 +81,7 @@ impl BookRepository for PostgresBookRepository {
         Ok(None)
     }
 
-    async fn get_book_by_id(&self, book_id: i32) -> Result<Option<Book>> {
+    pub async fn get_book_by_id(&self, book_id: i32) -> Result<Option<Book>> {
         let row = sqlx::query_as!(
             SqlBook,
             "SELECT id, title, author, image_url, year, pages FROM book WHERE id=$1",
@@ -115,7 +97,7 @@ impl BookRepository for PostgresBookRepository {
         Ok(None)
     }
 
-    async fn add_book(&mut self, input: BookInput) -> Result<Book> {
+    pub async fn add_book(&mut self, input: BookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,
             "INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages",
@@ -131,7 +113,7 @@ impl BookRepository for PostgresBookRepository {
         Ok(row.into_book())
     }
 
-    async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>> {
+    pub async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>> {
         let rows = sqlx::query_as!(
             SqlNote,
             "SELECT id, book_id, note, page FROM note WHERE book_id=$1",
@@ -144,7 +126,7 @@ impl BookRepository for PostgresBookRepository {
         Ok(Some(rows.into_iter().map(|row| row.into_note()).collect()))
     }
 
-    async fn add_note(&mut self, input: NoteInput) -> Result<Note> {
+    pub async fn add_note(&mut self, input: NoteInput) -> Result<Note> {
         let row = sqlx::query_as!(
             SqlNote,
             "INSERT INTO note(book_id, note, page) VALUES ($1, $2, $3) RETURNING id, book_id, note, page",

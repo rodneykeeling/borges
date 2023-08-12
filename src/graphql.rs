@@ -8,7 +8,7 @@ use async_graphql::{
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{extract::Extension, response::Html};
 
-use crate::repository::{BookRepository, Storage};
+use crate::repository::Storage;
 
 #[derive(Clone, Debug, SimpleObject)]
 #[graphql(complex)]
