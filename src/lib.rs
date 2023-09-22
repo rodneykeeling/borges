@@ -6,6 +6,7 @@ use anyhow::Result;
 use async_graphql::{extensions::Logger, EmptySubscription, Schema};
 use axum::{extract::Extension, routing::get, Router};
 use dotenvy::dotenv;
+use sqlx::{Pool, Postgres};
 use tokio::signal;
 use tower_http::trace::{self, TraceLayer};
 use tracing::warn;
@@ -14,15 +15,10 @@ use tracing::Level;
 pub mod graphql;
 pub mod repository;
 
-pub async fn generate_app() -> Result<Router, Box<dyn std::error::Error>> {
+pub async fn generate_app(db_conn: Pool<Postgres>) -> Result<Router, Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    tracing_subscriber::fmt()
-        .with_target(false)
-        .compact()
-        .init();
-
-    let repository = BookRepository::new().await?;
+    let repository = BookRepository::new(db_conn).await?;
 
     let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(repository)

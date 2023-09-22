@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use crate::graphql::{Book, BookInput, Note, NoteInput};
 use anyhow::Result;
-use dotenvy_macro::dotenv;
-use sqlx::{pool::PoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use tokio::sync::Mutex;
 
 pub type Storage = Arc<Mutex<BookRepository>>;
@@ -57,12 +56,8 @@ pub struct BookRepository {
 }
 
 impl BookRepository {
-    pub async fn new() -> Result<Arc<Mutex<Self>>> {
-        let db: Pool<Postgres> = PoolOptions::new()
-            .max_connections(5)
-            .connect(dotenv!("DATABASE_URL"))
-            .await?;
-        Ok(Arc::new(Mutex::new(Self { db })))
+    pub async fn new(conn: Pool<Postgres>) -> Result<Arc<Mutex<Self>>> {
+        Ok(Arc::new(Mutex::new(Self { db: conn })))
     }
 
     pub async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {

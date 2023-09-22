@@ -1,0 +1,14 @@
+---
+source: tests/approval.rs
+expression: result
+---
+{
+  "data": {
+    "addNote": {
+      "bookId": 1,
+      "id": 4,
+      "note": "new note!",
+      "page": 3
+    }
+  }
+}
