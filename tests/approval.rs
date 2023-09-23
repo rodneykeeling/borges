@@ -27,6 +27,7 @@ async fn _run_request(request_body: Request, pool: Pool<Postgres>) -> Value {
         )
         .await
         .unwrap();
+
     let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
     let result: Value = serde_json::from_slice(&body).unwrap();
 
