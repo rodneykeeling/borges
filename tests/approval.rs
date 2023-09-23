@@ -33,8 +33,24 @@ async fn _run_request(request_body: Request, pool: Pool<Postgres>) -> Value {
     result
 }
 
+// Macro to set the insta test snapshot suffix. This is needed to mark the tests correctly since
+// insta names the snapshots after the `inner` function from `#[sqlx::test]`, marking all test
+// snapshots as `approval__inner.snap`, `approval__inner-2.snap`, etc., which can end up with
+// random ordering and clobbered snapshot file diffs.
+//
+// Pulled from https://insta.rs/docs/patterns/
+macro_rules! set_snapshot_suffix {
+    ($($expr:expr),*) => {
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_suffix(format!($($expr,)*));
+        let _guard = settings.bind_to_scope();
+    }
+}
+
 #[sqlx::test]
 async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("book_query");
+
     let book_query = "
         query {
           book(bookId: 1) {
@@ -67,6 +83,8 @@ async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
 
 #[sqlx::test]
 async fn test_add_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("add_note_mutation");
+
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: 3}) {
@@ -93,6 +111,8 @@ async fn test_add_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
 
 #[sqlx::test]
 async fn test_invalid_book_id_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("invalid_book_id_note_mutation");
+
     let mutation = "
         mutation {
           addNote(input: {bookId: 9999, note: \"new note!\", page: 3}) {
@@ -119,6 +139,8 @@ async fn test_invalid_book_id_note_mutation(pool: Pool<Postgres>) -> sqlx::Resul
 
 #[sqlx::test]
 async fn test_invalid_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("invalid_page_note_mutation");
+
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: 9999}) {
@@ -145,6 +167,8 @@ async fn test_invalid_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<(
 
 #[sqlx::test]
 async fn test_invalid_negative_book_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("invalid_negative_book_page_note_mutation");
+
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: -5}) {
