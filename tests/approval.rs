@@ -59,6 +59,7 @@ async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
             author
             year
             pages
+            status
             notes {
               id
               bookId

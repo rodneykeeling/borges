@@ -1,14 +1,35 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_graphql::{
-    http::GraphiQLSource, ComplexObject, Context, EmptySubscription, InputObject, Object, Schema,
-    SimpleObject,
+    http::GraphiQLSource, ComplexObject, Context, EmptySubscription, Enum, InputObject, Object,
+    Schema, SimpleObject,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{extract::Extension, response::Html};
 
 use crate::repository::Storage;
+
+#[derive(Clone, Copy, Debug, Enum, Eq, PartialEq, sqlx::Type)]
+#[sqlx(rename_all = "lowercase", type_name = "status")]
+pub enum ReadingStatus {
+    Unread,
+    Reading,
+    Read,
+}
+
+impl FromStr for ReadingStatus {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "unread" => Ok(Self::Unread),
+            "reading" => Ok(Self::Reading),
+            "read" => Ok(Self::Read),
+            _ => Err(anyhow!("Invalid reading status")),
+        }
+    }
+}
 
 #[derive(Clone, Debug, SimpleObject)]
 #[graphql(complex)]
@@ -25,6 +46,8 @@ pub struct Book {
     pub year: i32,
     /// The number of pages in the book
     pub pages: i32,
+    /// The reading status of the book
+    pub status: ReadingStatus,
 }
 
 #[derive(Clone, InputObject)]
@@ -39,6 +62,8 @@ pub struct BookInput {
     pub year: i32,
     /// The number of pages in the book
     pub pages: i32,
+    /// The reading status of the book
+    pub status: Option<ReadingStatus>,
 }
 
 #[derive(SimpleObject)]
@@ -123,6 +148,7 @@ impl Mutation {
             image_url: input.image_url,
             year: input.year,
             pages: input.pages,
+            status: input.status,
         };
         let book = repository.lock().await.add_book(book_input).await?;
         Ok(book)

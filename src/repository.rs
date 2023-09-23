@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::graphql::{Book, BookInput, Note, NoteInput};
+use crate::graphql::{Book, BookInput, Note, NoteInput, ReadingStatus};
 use anyhow::Result;
 use sqlx::{Pool, Postgres};
 use tokio::sync::Mutex;
@@ -15,6 +15,7 @@ struct SqlBook {
     image_url: Option<String>,
     year: i32,
     pages: i32,
+    status: ReadingStatus,
 }
 
 impl SqlBook {
@@ -27,6 +28,7 @@ impl SqlBook {
             image_url: self.image_url,
             year: self.year,
             pages: self.pages,
+            status: self.status,
         }
     }
 }
@@ -63,7 +65,7 @@ impl BookRepository {
     pub async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {
         let row = sqlx::query_as!(
             SqlBook,
-            "SELECT id, title, author, image_url, year, pages FROM book WHERE title=$1",
+            r#"SELECT id, title, author, image_url, year, pages, status AS "status: _" FROM book WHERE title=$1"#,
             title,
         )
         .fetch_optional(&self.db)
@@ -79,7 +81,7 @@ impl BookRepository {
     pub async fn get_book_by_id(&self, book_id: i32) -> Result<Option<Book>> {
         let row = sqlx::query_as!(
             SqlBook,
-            "SELECT id, title, author, image_url, year, pages FROM book WHERE id=$1",
+            r#"SELECT id, title, author, image_url, year, pages, status AS "status: _" FROM book WHERE id=$1"#,
             book_id,
         )
         .fetch_optional(&self.db)
@@ -95,7 +97,7 @@ impl BookRepository {
     pub async fn add_book(&mut self, input: BookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,
-            "INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages",
+            r#"INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages, status AS "status: _""#,
             input.title,
             input.author,
             input.image_url,
