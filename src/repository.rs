@@ -19,7 +19,7 @@ struct SqlBook {
 }
 
 impl SqlBook {
-    /// Serializes a SqlBook database row to a Book domain model.
+    /// Serializes a `SqlBook` database row to a Book domain model.
     fn into_book(self) -> Book {
         Book {
             id: self.id,
@@ -42,7 +42,7 @@ struct SqlNote {
 }
 
 impl SqlNote {
-    /// Serializes a SqlNote database row to a Note domain model.
+    /// Serializes a `SqlNote` database row to a Note domain model.
     fn into_note(self) -> Note {
         Note {
             id: self.id,
@@ -58,8 +58,8 @@ pub struct BookRepository {
 }
 
 impl BookRepository {
-    pub async fn new(conn: Pool<Postgres>) -> Result<Arc<Mutex<Self>>> {
-        Ok(Arc::new(Mutex::new(Self { db: conn })))
+    pub fn new(conn: Pool<Postgres>) -> Arc<Mutex<Self>> {
+        Arc::new(Mutex::new(Self { db: conn }))
     }
 
     pub async fn get_book_by_title(&self, title: String) -> Result<Option<Book>> {
@@ -118,7 +118,7 @@ impl BookRepository {
         )
         .fetch_all(&self.db)
         .await
-        .unwrap_or(Vec::new());
+        .unwrap_or_default();
 
         Ok(Some(rows.into_iter().map(|row| row.into_note()).collect()))
     }

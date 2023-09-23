@@ -118,9 +118,9 @@ impl Query {
         let repository = ctx.data_unchecked::<Storage>().clone();
 
         if let Some(input) = book_id {
-            return Ok(repository.lock().await.get_book_by_id(input).await?);
+            return repository.lock().await.get_book_by_id(input).await;
         } else if let Some(input) = title {
-            return Ok(repository.lock().await.get_book_by_title(input).await?);
+            return repository.lock().await.get_book_by_title(input).await;
         }
         Err(GraphQLError::BadInput(
             "Either `bookId` or `title` input value required for query.".to_string(),

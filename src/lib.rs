@@ -18,7 +18,7 @@ pub mod repository;
 pub async fn generate_app(db_conn: Pool<Postgres>) -> Result<Router, Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let repository = BookRepository::new(db_conn).await?;
+    let repository = BookRepository::new(db_conn);
 
     let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(repository)
