@@ -12,7 +12,7 @@ expression: result
           "line": 3
         }
       ],
-      "message": "Note page number cannot be greater than the highest page count of the book.",
+      "message": "Note page number cannot be less than 1.",
       "path": [
         "addNote"
       ]

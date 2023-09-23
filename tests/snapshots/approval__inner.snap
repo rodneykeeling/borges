@@ -3,21 +3,19 @@ source: tests/approval.rs
 expression: result
 ---
 {
-  "data": {
-    "book": {
-      "author": "Jorge Luis Borges",
-      "id": 1,
-      "notes": [
+  "data": null,
+  "errors": [
+    {
+      "locations": [
         {
-          "bookId": 1,
-          "id": 1,
-          "note": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          "page": 100
+          "column": 11,
+          "line": 3
         }
       ],
-      "pages": 565,
-      "title": "Collected Fictions",
-      "year": 1998
+      "message": "Book with ID {input.book_id} not found",
+      "path": [
+        "addNote"
+      ]
     }
-  }
+  ]
 }

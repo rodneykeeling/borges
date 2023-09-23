@@ -4,35 +4,6 @@ use serde_json::Value;
 use sqlx::{Pool, Postgres};
 use tower::ServiceExt;
 
-const BOOK_QUERY: &str = "
-    query {
-      book(bookId: 1) {
-        id
-        title
-        author
-        year
-        pages
-        notes {
-          id
-          bookId
-          note
-          page
-        }
-      }
-    }
-";
-
-const ADD_NOTE_MUTATION: &str = "
-    mutation {
-      addNote(input: {bookId: 1, note: \"new note!\", page: 3}) {
-        id
-        bookId
-        note
-        page
-      }
-    }
-";
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Request {
@@ -64,8 +35,26 @@ async fn _run_request(request_body: Request, pool: Pool<Postgres>) -> Value {
 
 #[sqlx::test]
 async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    let book_query = "
+        query {
+          book(bookId: 1) {
+            id
+            title
+            author
+            year
+            pages
+            notes {
+              id
+              bookId
+              note
+              page
+            }
+          }
+        }
+    "
+    .to_string();
     let body = Request {
-        query: BOOK_QUERY.to_string(),
+        query: book_query,
         operation_name: None,
         variables: None,
     };
@@ -78,8 +67,98 @@ async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
 
 #[sqlx::test]
 async fn test_add_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    let mutation = "
+        mutation {
+          addNote(input: {bookId: 1, note: \"new note!\", page: 3}) {
+            id
+            bookId
+            note
+            page
+          }
+        }
+    "
+    .to_string();
+
     let body = Request {
-        query: ADD_NOTE_MUTATION.to_string(),
+        query: mutation,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn test_invalid_book_id_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    let mutation = "
+        mutation {
+          addNote(input: {bookId: 9999, note: \"new note!\", page: 3}) {
+            id
+            bookId
+            note
+            page
+          }
+        }
+    "
+    .to_string();
+
+    let body = Request {
+        query: mutation,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn test_invalid_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    let mutation = "
+        mutation {
+          addNote(input: {bookId: 1, note: \"new note!\", page: 9999}) {
+            id
+            bookId
+            note
+            page
+          }
+        }
+    "
+    .to_string();
+
+    let body = Request {
+        query: mutation,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn test_invalid_negative_book_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    let mutation = "
+        mutation {
+          addNote(input: {bookId: 1, note: \"new note!\", page: -5}) {
+            id
+            bookId
+            note
+            page
+          }
+        }
+    "
+    .to_string();
+
+    let body = Request {
+        query: mutation,
         operation_name: None,
         variables: None,
     };
