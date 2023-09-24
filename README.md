@@ -1,5 +1,5 @@
 # Borges
-A personal review and note-taking app for books that I read. This is a work-in-progress, so come back soon!
+A personal cataloging and note-taking system for books that I read or want to read.
 
 ### Setup
 - `cp env-example .env`
