@@ -1,0 +1,87 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, title, author, image_url, year, pages, status AS \"status: _\" FROM book WHERE status = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "author",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "image_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "pages",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "status: _",
+        "type_info": {
+          "Custom": {
+            "name": "status",
+            "kind": {
+              "Enum": [
+                "unread",
+                "read",
+                "reading"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "_status",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "status",
+                  "kind": {
+                    "Enum": [
+                      "unread",
+                      "read",
+                      "reading"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e49ee0997e39d656d0156a4ec38ea458f37f14e5b423190c85529215af7ef17b"
+}
