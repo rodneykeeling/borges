@@ -148,10 +148,13 @@ async fn test_add_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: 3}) {
-            id
-            bookId
-            note
-            page
+            note {
+              id
+              bookId
+              note
+              page
+            }
+            success
           }
         }
     "
@@ -176,10 +179,13 @@ async fn test_invalid_book_id_note_mutation(pool: Pool<Postgres>) -> sqlx::Resul
     let mutation = "
         mutation {
           addNote(input: {bookId: 9999, note: \"new note!\", page: 3}) {
-            id
-            bookId
-            note
-            page
+            note {
+              id
+              bookId
+              note
+              page
+            }
+            success
           }
         }
     "
@@ -204,10 +210,13 @@ async fn test_invalid_page_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<(
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: 9999}) {
-            id
-            bookId
-            note
-            page
+            note {
+              id
+              bookId
+              note
+              page
+            }
+            success
           }
         }
     "
@@ -232,10 +241,13 @@ async fn test_invalid_negative_book_page_note_mutation(pool: Pool<Postgres>) -> 
     let mutation = "
         mutation {
           addNote(input: {bookId: 1, note: \"new note!\", page: -5}) {
-            id
-            bookId
-            note
-            page
+            note {
+              id
+              bookId
+              note
+              page
+            }
+            success
           }
         }
     "
@@ -259,10 +271,13 @@ async fn test_invalid_book_id_status_mutation(pool: Pool<Postgres>) -> sqlx::Res
 
     let mutation = "
         mutation {
-          updateBookStatus(bookId: 999, status: READ) {
-            id
-            title
-            status
+          updateBookStatus(input: {bookId: 999, status: READ}) {
+            book {
+              id
+              title
+              status
+            }
+            success
           }
         }
     "
@@ -286,10 +301,13 @@ async fn test_book_status_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
 
     let mutation = "
         mutation {
-          updateBookStatus(bookId: 2, status: READ) {
-            id
-            title
-            status
+          updateBookStatus(input: {bookId: 2, status: READ}) {
+            book {
+              id
+              title
+              status
+            }
+            success
           }
         }
     "

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::graphql::{Book, BookInput, Note, NoteInput, ReadingStatus};
+use crate::graphql::{AddBookInput, AddNoteInput, Book, Note, ReadingStatus};
 use anyhow::{anyhow, Result};
 use sqlx::{Pool, Postgres};
 use tokio::sync::Mutex;
@@ -118,7 +118,7 @@ impl BookRepository {
         Ok(Some(rows.into_iter().map(|row| row.into_book()).collect()))
     }
 
-    pub async fn add_book(&mut self, input: BookInput) -> Result<Book> {
+    pub async fn add_book(&mut self, input: AddBookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,
             r#"INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages, status AS "status: _""#,
@@ -168,7 +168,7 @@ impl BookRepository {
         Ok(Some(rows.into_iter().map(|row| row.into_note()).collect()))
     }
 
-    pub async fn add_note(&mut self, input: NoteInput) -> Result<Note> {
+    pub async fn add_note(&mut self, input: AddNoteInput) -> Result<Note> {
         let row = sqlx::query_as!(
             SqlNote,
             "INSERT INTO note(book_id, note, page) VALUES ($1, $2, $3) RETURNING id, book_id, note, page",

@@ -5,10 +5,13 @@ expression: result
 {
   "data": {
     "addNote": {
-      "bookId": 1,
-      "id": 4,
-      "note": "new note!",
-      "page": 3
+      "note": {
+        "bookId": 1,
+        "id": 4,
+        "note": "new note!",
+        "page": 3
+      },
+      "success": true
     }
   }
 }

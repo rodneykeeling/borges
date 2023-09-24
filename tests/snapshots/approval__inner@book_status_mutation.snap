@@ -5,9 +5,12 @@ expression: result
 {
   "data": {
     "updateBookStatus": {
-      "id": 2,
-      "status": "READ",
-      "title": "Gravity's Rainbow"
+      "book": {
+        "id": 2,
+        "status": "READ",
+        "title": "Gravity's Rainbow"
+      },
+      "success": true
     }
   }
 }

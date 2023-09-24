@@ -68,7 +68,7 @@ pub struct Book {
 }
 
 #[derive(Clone, InputObject)]
-pub struct BookInput {
+pub struct AddBookInput {
     /// The title of the book
     pub title: String,
     /// The author of the book
@@ -84,6 +84,14 @@ pub struct BookInput {
 }
 
 #[derive(SimpleObject)]
+pub struct AddBookPayload {
+    /// The book that was added
+    book: Book,
+    /// Did the operation succeed?
+    success: bool,
+}
+
+#[derive(SimpleObject)]
 pub struct Note {
     /// The note ID
     pub id: i32,
@@ -96,13 +104,37 @@ pub struct Note {
 }
 
 #[derive(InputObject)]
-pub struct NoteInput {
+pub struct AddNoteInput {
     /// The ID of the book this note references
     pub book_id: i32,
     /// The note content for a book
     pub note: String,
     /// An optional page number related to the number
     pub page: Option<i32>,
+}
+
+#[derive(SimpleObject)]
+pub struct AddNotePayload {
+    /// The note that was added
+    note: Note,
+    /// Did the operation succeed?
+    success: bool,
+}
+
+#[derive(InputObject)]
+pub struct UpdateBookStatusInput {
+    /// The ID of the book this note references
+    pub book_id: i32,
+    /// The reading status of the book
+    pub status: ReadingStatus,
+}
+
+#[derive(SimpleObject)]
+pub struct UpdateBookStatusPayload {
+    /// The book that was updated
+    book: Book,
+    /// Did the operation succeed?
+    success: bool,
 }
 
 pub struct Query;
@@ -161,7 +193,7 @@ impl Query {
 #[Object]
 impl Mutation {
     /// Add a new book to the shelf
-    async fn add_book(&self, ctx: &Context<'_>, input: BookInput) -> Result<Book> {
+    async fn add_book(&self, ctx: &Context<'_>, input: AddBookInput) -> Result<AddBookPayload> {
         let repository = ctx.data_unchecked::<Storage>().clone();
 
         if input.pages < 1 {
@@ -171,7 +203,7 @@ impl Mutation {
             .into());
         }
 
-        let book_input = BookInput {
+        let book_input = AddBookInput {
             title: input.title,
             author: input.author,
             image_url: input.image_url,
@@ -180,28 +212,33 @@ impl Mutation {
             status: input.status,
         };
         let book = repository.lock().await.add_book(book_input).await?;
-        Ok(book)
+        Ok(AddBookPayload {
+            book,
+            success: true,
+        })
     }
 
     /// Update a book's reading status
     async fn update_book_status(
         &self,
         ctx: &Context<'_>,
-        book_id: i32,
-        status: ReadingStatus,
-    ) -> Result<Book> {
+        input: UpdateBookStatusInput,
+    ) -> Result<UpdateBookStatusPayload> {
         let repository = ctx.data_unchecked::<Storage>().clone();
 
         let book = repository
             .lock()
             .await
-            .update_book_status(book_id, status)
+            .update_book_status(input.book_id, input.status)
             .await?;
-        Ok(book)
+        Ok(UpdateBookStatusPayload {
+            book,
+            success: true,
+        })
     }
 
     /// Add a new note for a given book
-    async fn add_note(&self, ctx: &Context<'_>, input: NoteInput) -> Result<Note> {
+    async fn add_note(&self, ctx: &Context<'_>, input: AddNoteInput) -> Result<AddNotePayload> {
         let repository = ctx.data_unchecked::<Storage>().clone();
 
         // Fetch requested book for validation
@@ -212,10 +249,7 @@ impl Mutation {
             .await?;
 
         if book.is_none() {
-            return Err(GraphQLError::BadInput(
-                "Book with ID {input.book_id} not found".to_string(),
-            )
-            .into());
+            return Err(GraphQLError::BadInput("Book with that ID not found".to_string()).into());
         };
         let book = book.unwrap();
 
@@ -234,13 +268,16 @@ impl Mutation {
             }
         }
 
-        let note_input = NoteInput {
+        let note_input = AddNoteInput {
             book_id: input.book_id,
             note: input.note,
             page: input.page,
         };
         let note = repository.lock().await.add_note(note_input).await?;
-        Ok(note)
+        Ok(AddNotePayload {
+            note,
+            success: true,
+        })
     }
 }
 

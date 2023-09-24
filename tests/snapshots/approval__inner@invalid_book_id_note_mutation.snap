@@ -12,7 +12,7 @@ expression: result
           "line": 3
         }
       ],
-      "message": "Book with ID {input.book_id} not found",
+      "message": "Book with that ID not found",
       "path": [
         "addNote"
       ]
