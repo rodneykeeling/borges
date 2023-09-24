@@ -1,0 +1,21 @@
+---
+source: tests/approval.rs
+expression: result
+---
+{
+  "data": null,
+  "errors": [
+    {
+      "locations": [
+        {
+          "column": 11,
+          "line": 3
+        }
+      ],
+      "message": "No book with ID 999 found.",
+      "path": [
+        "updateBookStatus"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+---
+source: tests/approval.rs
+expression: result
+---
+{
+  "data": {
+    "updateBookStatus": {
+      "id": 2,
+      "status": "READ",
+      "title": "Gravity's Rainbow"
+    }
+  }
+}

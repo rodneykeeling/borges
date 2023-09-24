@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::graphql::{Book, BookInput, Note, NoteInput, ReadingStatus};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use sqlx::{Pool, Postgres};
 use tokio::sync::Mutex;
 
@@ -132,6 +132,27 @@ impl BookRepository {
         .await?;
 
         Ok(row.into_book())
+    }
+
+    pub async fn update_book_status(
+        &mut self,
+        book_id: i32,
+        status: ReadingStatus,
+    ) -> Result<Book> {
+        let row = sqlx::query_as!(
+            SqlBook,
+            r#"UPDATE book SET status=$1 WHERE id=$2 RETURNING id, title, author, image_url, year, pages, status AS "status: _""#,
+            status as _,
+            book_id
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        if row.is_none() {
+            return Err(anyhow!("No book with ID {} found.", book_id));
+        }
+
+        Ok(row.unwrap().into_book())
     }
 
     pub async fn get_notes_by_book(&self, book_id: i32) -> Result<Option<Vec<Note>>> {

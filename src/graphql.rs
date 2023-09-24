@@ -183,6 +183,23 @@ impl Mutation {
         Ok(book)
     }
 
+    /// Update a book's reading status
+    async fn update_book_status(
+        &self,
+        ctx: &Context<'_>,
+        book_id: i32,
+        status: ReadingStatus,
+    ) -> Result<Book> {
+        let repository = ctx.data_unchecked::<Storage>().clone();
+
+        let book = repository
+            .lock()
+            .await
+            .update_book_status(book_id, status)
+            .await?;
+        Ok(book)
+    }
+
     /// Add a new note for a given book
     async fn add_note(&self, ctx: &Context<'_>, input: NoteInput) -> Result<Note> {
         let repository = ctx.data_unchecked::<Storage>().clone();

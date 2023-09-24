@@ -252,3 +252,57 @@ async fn test_invalid_negative_book_page_note_mutation(pool: Pool<Postgres>) -> 
 
     Ok(())
 }
+
+#[sqlx::test]
+async fn test_invalid_book_id_status_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("invalid_book_id_status_mutation");
+
+    let mutation = "
+        mutation {
+          updateBookStatus(bookId: 999, status: READ) {
+            id
+            title
+            status
+          }
+        }
+    "
+    .to_string();
+
+    let body = Request {
+        query: mutation,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn test_book_status_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("book_status_mutation");
+
+    let mutation = "
+        mutation {
+          updateBookStatus(bookId: 2, status: READ) {
+            id
+            title
+            status
+          }
+        }
+    "
+    .to_string();
+
+    let body = Request {
+        query: mutation,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
