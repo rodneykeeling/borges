@@ -1,0 +1,42 @@
+---
+source: tests/approval.rs
+expression: result
+---
+{
+  "data": {
+    "books": [
+      {
+        "author": "Thomas Pynchon",
+        "id": 2,
+        "pages": 776,
+        "status": "UNREAD",
+        "title": "Gravity's Rainbow",
+        "year": 1973
+      },
+      {
+        "author": "Zadie Smith",
+        "id": 3,
+        "pages": 464,
+        "status": "UNREAD",
+        "title": "White Teeth",
+        "year": 2001
+      },
+      {
+        "author": "Cormac McCarthy",
+        "id": 4,
+        "pages": 351,
+        "status": "UNREAD",
+        "title": "Blood Meridian",
+        "year": 1985
+      },
+      {
+        "author": "Jorge Luis Borges",
+        "id": 1,
+        "pages": 565,
+        "status": "READ",
+        "title": "Collected Fictions",
+        "year": 1998
+      }
+    ]
+  }
+}

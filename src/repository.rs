@@ -94,6 +94,30 @@ impl BookRepository {
         Ok(None)
     }
 
+    pub async fn get_books(&self, status: Option<ReadingStatus>) -> Result<Option<Vec<Book>>> {
+        let statuses;
+        if let Some(reading_state) = status {
+            statuses = vec![reading_state];
+        } else {
+            statuses = vec![
+                ReadingStatus::Unread,
+                ReadingStatus::Reading,
+                ReadingStatus::Read,
+            ];
+        }
+
+        let rows = sqlx::query_as!(
+            SqlBook,
+            r#"SELECT id, title, author, image_url, year, pages, status AS "status: _" FROM book WHERE status = ANY($1)"#,
+            statuses as _,
+        )
+        .fetch_all(&self.db)
+        .await
+        .unwrap_or_default();
+
+        Ok(Some(rows.into_iter().map(|row| row.into_book()).collect()))
+    }
+
     pub async fn add_book(&mut self, input: BookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,

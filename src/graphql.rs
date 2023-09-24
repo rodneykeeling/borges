@@ -31,6 +31,23 @@ impl FromStr for ReadingStatus {
     }
 }
 
+impl Display for ReadingStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unread => write!(f, "unread"),
+            Self::Read => write!(f, "read"),
+            Self::Reading => write!(f, "reading"),
+        }
+    }
+}
+
+// This allows the use of Enum types to be used directly in postgres sqlx queries.
+impl sqlx::postgres::PgHasArrayType for ReadingStatus {
+    fn array_type_info() -> sqlx::postgres::PgTypeInfo {
+        sqlx::postgres::PgTypeInfo::with_name("_status")
+    }
+}
+
 #[derive(Clone, Debug, SimpleObject)]
 #[graphql(complex)]
 pub struct Book {
@@ -126,6 +143,18 @@ impl Query {
             "Either `bookId` or `title` input value required for query.".to_string(),
         )
         .into())
+    }
+
+    /// Fetch all books with an optional status specifier
+    async fn books(
+        &self,
+        ctx: &Context<'_>,
+        status: Option<ReadingStatus>,
+    ) -> Result<Option<Vec<Book>>> {
+        let repository = ctx.data_unchecked::<Storage>().clone();
+
+        let books = repository.lock().await.get_books(status).await?;
+        Ok(books)
     }
 }
 

@@ -84,6 +84,64 @@ async fn test_book_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
 }
 
 #[sqlx::test]
+async fn test_all_books_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("all_books_query");
+
+    let book_query = "
+        query {
+          books {
+            id
+            title
+            author
+            year
+            pages
+            status
+          }
+        }
+    "
+    .to_string();
+    let body = Request {
+        query: book_query,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
+async fn test_read_books_query(pool: Pool<Postgres>) -> sqlx::Result<()> {
+    set_snapshot_suffix!("read_books_query");
+
+    let book_query = "
+        query {
+          books(status: READ) {
+            id
+            title
+            author
+            year
+            pages
+            status
+          }
+        }
+    "
+    .to_string();
+    let body = Request {
+        query: book_query,
+        operation_name: None,
+        variables: None,
+    };
+
+    let result = _run_request(body, pool).await;
+    insta::assert_json_snapshot!(result);
+
+    Ok(())
+}
+
+#[sqlx::test]
 async fn test_add_note_mutation(pool: Pool<Postgres>) -> sqlx::Result<()> {
     set_snapshot_suffix!("add_note_mutation");
 

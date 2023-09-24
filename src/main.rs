@@ -4,8 +4,10 @@ use anyhow::Result;
 use axum::Server;
 use borges::{generate_app, shutdown_signal};
 use dotenvy_macro::dotenv;
-use sqlx::{pool::PoolOptions, Pool, Postgres};
+use sqlx::PgPool;
+use sqlx::{postgres::PgConnectOptions, ConnectOptions};
 use tracing::info;
+use tracing::log::LevelFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,10 +16,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compact()
         .init();
 
-    let db: Pool<Postgres> = PoolOptions::new()
-        .max_connections(5)
-        .connect(dotenv!("DATABASE_URL"))
-        .await?;
+    let db_opts: PgConnectOptions = dotenv!("DATABASE_URL").parse()?;
+    let db = PgPool::connect_with(db_opts.log_statements(LevelFilter::Info)).await?;
 
     let app = generate_app(db).await?;
     let addr: SocketAddr = "0.0.0.0:8000".parse()?;

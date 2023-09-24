@@ -1,0 +1,18 @@
+---
+source: tests/approval.rs
+expression: result
+---
+{
+  "data": {
+    "books": [
+      {
+        "author": "Jorge Luis Borges",
+        "id": 1,
+        "pages": 565,
+        "status": "READ",
+        "title": "Collected Fictions",
+        "year": 1998
+      }
+    ]
+  }
+}
