@@ -12,6 +12,7 @@ use tower_http::trace::{self, TraceLayer};
 use tracing::warn;
 use tracing::Level;
 
+pub mod books_api;
 pub mod graphql;
 pub mod repository;
 

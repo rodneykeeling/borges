@@ -121,17 +121,29 @@ impl BookRepository {
     pub async fn add_book(&mut self, input: AddBookInput) -> Result<Book> {
         let row = sqlx::query_as!(
             SqlBook,
-            r#"INSERT INTO book(title, author, image_url, year, pages) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, author, image_url, year, pages, status AS "status: _""#,
+            r#"INSERT INTO book(title, author, image_url, year, pages, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, title, author, image_url, year, pages, status AS "status: _""#,
             input.title,
             input.author,
             input.image_url,
             input.year,
             input.pages,
+            input.status.unwrap_or_default() as _,
         )
         .fetch_one(&self.db)
-        .await?;
-
-        Ok(row.into_book())
+        .await;
+        match row {
+            Ok(r) => Ok(r.into_book()),
+            Err(error) => match error {
+                sqlx::Error::Database(error)
+                    if error.constraint() == Some("book_title_author_key") =>
+                {
+                    Err(anyhow!(
+                        "This book title and author combination has already been added."
+                    ))
+                }
+                _ => Err(anyhow!("There was an error connecting to the database.")),
+            },
+        }
     }
 
     pub async fn update_book_status(

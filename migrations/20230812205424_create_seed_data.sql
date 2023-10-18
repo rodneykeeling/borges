@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS book(
     id SERIAL PRIMARY KEY NOT NULL,
     title VARCHAR(100) NOT NULL,
     author VARCHAR(100) NOT NULL,
-    image_url VARCHAR(100),
+    image_url TEXT,
     year INTEGER NOT NULL,
     pages INTEGER NOT NULL,
     UNIQUE(title, author)
